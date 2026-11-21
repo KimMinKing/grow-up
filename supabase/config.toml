@@ -1,0 +1,13 @@
+[functions.generate-roadmap]
+verify_jwt = true
+
+[functions.delete-account]
+# The function verifies the caller's user token before using its server key.
+verify_jwt = false
+
+[functions.verify-forest-battle]
+# Authentication is checked inside the function before the service key is used.
+verify_jwt = false
+
+[auth]
+additional_redirect_urls = ["com.example.growup://login-callback/"]

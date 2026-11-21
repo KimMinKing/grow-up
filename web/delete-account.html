@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>계정 삭제 요청 · 전설키우기</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="delete-account.css">
+  <script src="delete-account-config.js" defer></script>
+  <script type="module" src="delete-account.mjs"></script>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">전설키우기 · 계정 관리</p>
+    <h1>계정 삭제 요청</h1>
+    <p>앱을 설치하지 않아도 계정 이메일의 인증번호로 본인 확인 후 삭제할 수 있습니다.</p>
+
+    <section class="notice" aria-labelledby="delete-scope">
+      <h2 id="delete-scope">삭제되는 기록</h2>
+      <p>Supabase 로그인 계정과 연결된 목표 동기화, 할 일·메모 동기화, 정식 게임 진행이 삭제됩니다.</p>
+      <p>휴대폰에만 저장된 기록, 직접 내보낸 백업 파일, 이미 발송된 메일과 서비스 제공자의 백업·로그는 이 요청으로 삭제되지 않습니다.</p>
+    </section>
+
+    <form id="email-form">
+      <label for="email">계정 이메일</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" required maxlength="254">
+      <button type="submit">인증번호 받기</button>
+    </form>
+
+    <form id="code-form" hidden>
+      <label for="code">이메일로 받은 인증번호</label>
+      <input id="code" type="text" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+      <button type="submit">본인 확인</button>
+    </form>
+
+    <form id="delete-form" hidden>
+      <p class="verified">본인 확인이 끝났습니다. 삭제하면 서버 계정과 연결 기록을 복구할 수 없습니다.</p>
+      <label for="confirmation">계속하려면 <strong>탈퇴</strong>를 입력하세요</label>
+      <input id="confirmation" type="text" autocomplete="off" required>
+      <button class="danger" type="submit">계정과 서버 기록 삭제</button>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>
