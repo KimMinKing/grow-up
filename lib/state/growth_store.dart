@@ -546,6 +546,7 @@ class GrowthStore extends ChangeNotifier {
     GrowthGoal incoming, {
     Map<String, dynamic>? expectedLocal,
     bool keepLocalBackup = false,
+    void Function()? beforeApply,
   }) async {
     final current = goalById(incoming.id);
     if (current == null && expectedLocal != null) return false;
@@ -559,8 +560,21 @@ class GrowthStore extends ChangeNotifier {
         (current != null && !current.archived ? 1 : 0) +
         (!incoming.archived ? 1 : 0);
     if (activeAfter > 5) return false;
+    if (current != null && keepLocalBackup) {
+      await addSyncBackup(current.toJson());
+    }
+    beforeApply?.call();
+    final activeAfterBackup =
+        goals.length -
+        (current != null && !current.archived ? 1 : 0) +
+        (!incoming.archived ? 1 : 0);
+    if (!identical(goalById(incoming.id), current) ||
+        (current != null &&
+            jsonEncode(current.toJson()) != jsonEncode(expectedLocal)) ||
+        activeAfterBackup > 5) {
+      return false;
+    }
     if (current != null) {
-      if (keepLocalBackup) await addSyncBackup(current.toJson());
       _goals[_goals.indexOf(current)] = incoming;
     } else {
       _goals.add(incoming);

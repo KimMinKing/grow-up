@@ -240,6 +240,7 @@ class GoalSyncService {
         final applied = await store.importSyncedGoal(
           GrowthGoal.fromJson(server.snapshot),
           expectedLocal: expected,
+          beforeApply: () => _checkUser(owner),
         );
         _checkUser(owner);
         if (!applied) {
@@ -329,6 +330,7 @@ class GoalSyncService {
         GrowthGoal.fromJson(fresh.snapshot),
         expectedLocal: local == null ? null : _copy(local.toJson()),
         keepLocalBackup: local != null,
+        beforeApply: () => _checkUser(owner),
       );
       _checkUser(owner);
       if (!applied) throw StateError('목표가 바뀌었거나 진행 중인 목표가 5개예요.');

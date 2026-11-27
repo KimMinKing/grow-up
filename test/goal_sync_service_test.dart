@@ -40,6 +40,18 @@ class _FakeRemote implements GoalSyncRemote {
   }
 }
 
+class _SwitchingGrowthStore extends GrowthStore {
+  _SwitchingGrowthStore(super.prefs, this.afterBackup);
+
+  final Future<void> Function() afterBackup;
+
+  @override
+  Future<void> addSyncBackup(Map<String, dynamic> snapshot) async {
+    await super.addSyncBackup(snapshot);
+    await afterBackup();
+  }
+}
+
 class _SignedInAuth implements AuthGateway {
   @override
   String? get currentUserId => 'user-a';
@@ -203,6 +215,92 @@ void main() {
     expect(store.archivedGoals.single.completions[store.today], 'MAX');
     expect(store.archivedGoals.single.completionActions[store.today], '40분');
     expect(store.archivedGoals.single.localBackup, isTrue);
+  });
+
+  test(
+    'account switch during conflict backup does not import server goal',
+    () async {
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      var user = 'user-a';
+      final store = _SwitchingGrowthStore(
+        SharedPreferencesAsync(),
+        () async => user = 'user-b',
+      );
+      await store.load();
+      await _addGoal(store);
+      final remote = _FakeRemote();
+      final checkpoints = GoalSyncCheckpointStore(SharedPreferencesAsync());
+      final service = GoalSyncService(
+        store: store,
+        remote: remote,
+        checkpoints: checkpoints,
+        userId: () => user,
+      );
+      await service.sync();
+      final goal = store.goals.single;
+      await store.complete(goal, 'MINI');
+      final serverData = Map<String, dynamic>.from(
+        remote.rows[goal.id]!.snapshot,
+      )..['title'] = '서버 이름';
+      remote.rows[goal.id] = RemoteGoalSnapshot(
+        goalId: goal.id,
+        revision: 2,
+        snapshot: serverData,
+      );
+      final conflict = (await service.sync()).conflicts.single;
+
+      await expectLater(
+        service.resolve(conflict, keepLocal: false),
+        throwsStateError,
+      );
+      expect(store.goals.single.title, '독서');
+      expect(store.goals.single.completions[store.today], 'MINI');
+      expect((await checkpoints.load('user-a'))[goal.id]!.revision, 1);
+    },
+  );
+
+  test('local edit during conflict backup is not overwritten', () async {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    late _SwitchingGrowthStore store;
+    store = _SwitchingGrowthStore(SharedPreferencesAsync(), () async {
+      final current = store.goals.single;
+      await store.updateGoalSettings(
+        current,
+        title: '방금 고친 이름',
+        path: current.path,
+        weeklyTarget: current.weeklyTarget,
+      );
+    });
+    await store.load();
+    await _addGoal(store);
+    final remote = _FakeRemote();
+    final checkpoints = GoalSyncCheckpointStore(SharedPreferencesAsync());
+    final service = GoalSyncService(
+      store: store,
+      remote: remote,
+      checkpoints: checkpoints,
+      userId: () => 'user-a',
+    );
+    await service.sync();
+    final goal = store.goals.single;
+    await store.complete(goal, 'MINI');
+    final serverData = Map<String, dynamic>.from(remote.rows[goal.id]!.snapshot)
+      ..['title'] = '서버 이름';
+    remote.rows[goal.id] = RemoteGoalSnapshot(
+      goalId: goal.id,
+      revision: 2,
+      snapshot: serverData,
+    );
+    final conflict = (await service.sync()).conflicts.single;
+
+    await expectLater(
+      service.resolve(conflict, keepLocal: false),
+      throwsStateError,
+    );
+    expect(store.goals.single.title, '방금 고친 이름');
+    expect((await checkpoints.load('user-a'))[goal.id]!.revision, 1);
   });
 
   test(
