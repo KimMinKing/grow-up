@@ -53,11 +53,12 @@ flutter run -d chrome --dart-define-from-file=flutter_defines.env
 ```powershell
 flutter analyze
 flutter test
+node --test test/*.test.mjs
 flutter build web
 flutter build apk --debug
 ```
 
-웹 결과물은 `build/web/`, Android 디버그 APK는 `build/app/outputs/flutter-apk/`에 생성됩니다. 이 폴더와 배포용 APK·ZIP은 Git에 넣지 않습니다. 정식 배포용 서명·앱 ID·계정 삭제 흐름에는 추가 설정과 검증이 필요합니다. [출시 준비 기록](docs/RELEASE_PREP_2026_11_15.md)을 참고하세요.
+Node 테스트는 Node.js 22 환경에서 확인합니다. GitHub Actions는 `main` 푸시와 Pull Request에서 Flutter 분석·테스트와 Node 테스트를 자동 실행합니다. 웹 결과물은 `build/web/`, Android 디버그 APK는 `build/app/outputs/flutter-apk/`에 생성됩니다. 이 폴더와 배포용 APK·ZIP은 Git에 넣지 않습니다. 정식 배포용 서명·앱 ID·계정 삭제 흐름에는 추가 설정과 검증이 필요합니다. [출시 준비 기록](docs/RELEASE_PREP_2026_11_15.md)을 참고하세요.
 
 ## 프로젝트 구성
 
